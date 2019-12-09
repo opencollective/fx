@@ -24,7 +24,7 @@ func (n Node) Provision(meta map[string]string) error {
 	}
 
 	// TODO check if k3s server is running or not first
-	if n.Type == "master" {
+	if n.Type == nodeTypeMaster {
 		return ProvisionAsMaster(n)
 	}
 
@@ -34,7 +34,7 @@ func (n Node) Provision(meta map[string]string) error {
 
 // GetToken get token from master node
 func (n Node) GetToken() (string, error) {
-	if n.Type != "master" {
+	if n.Type != nodeTypeMaster {
 		return "", fmt.Errorf("could not get token from a non-master node")
 	}
 	return GetToken(n)

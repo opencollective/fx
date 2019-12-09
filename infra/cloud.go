@@ -50,7 +50,7 @@ func (c Cloud) Provision() error {
 	var master Node
 	agents := []Node{}
 	for _, n := range c.nodes {
-		if n.Type == "master" {
+		if n.Type == nodeTypeMaster {
 			master = n
 		} else {
 			agents = append(agents, n)
