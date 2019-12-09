@@ -77,12 +77,9 @@ func (c Cloud) Provision() error {
 		}(agent)
 	}
 
-	for range agents {
-		select {
-		case err := <-errCh:
-			if err != nil {
-				return err
-			}
+	for err := range errCh {
+		if err != nil {
+			return err
 		}
 	}
 
