@@ -7,7 +7,6 @@ import (
 )
 
 const nodeTypeMaster = "master"
-const nodeTypeAgent = "agent"
 
 // Provisioner provision interface
 type Provisioner interface {
