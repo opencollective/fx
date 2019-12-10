@@ -81,6 +81,7 @@ func CreateNode(ip string, user string, typ string, name string) (*Node, error) 
 
 // Provision provision node
 func (n *Node) Provision(meta map[string]string) error {
+	fmt.Println("===>", n.sshClient)
 	if err := n.sshClient.RunCommand(scripts["docker_version"].(string), ssh.CommandOptions{}); err != nil {
 
 		if err := n.sshClient.RunCommand(scripts["install_docker"].(string), ssh.CommandOptions{}); err != nil {
@@ -92,6 +93,7 @@ func (n *Node) Provision(meta map[string]string) error {
 		}
 	}
 
+	fmt.Println("===>", meta)
 	if n.Type == nodeTypeMaster {
 		if err := n.sshClient.RunCommand(scripts["check_k3s_server"].(string), ssh.CommandOptions{}); err != nil {
 			cmd := scripts["setup_k3s_master"].(func(ip string) string)(n.IP)

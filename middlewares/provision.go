@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -24,6 +25,10 @@ func Provision(ctx context.Contexter) (err error) {
 	}
 	ctx.Set("cloud", cloud)
 
+	conf, err := cloud.GetConfig()
+	if err != nil {
+		return err
+	}
 	var deployer infra.Deployer
 	if os.Getenv("KUBECONFIG") != "" {
 		deployer, err = k8sInfra.CreateDeployer(os.Getenv("KUBECONFIG"))
@@ -32,7 +37,11 @@ func Provision(ctx context.Contexter) (err error) {
 		}
 		ctx.Set("cloud_type", config.CloudTypeK8S)
 	} else if meta["type"] == config.CloudTypeDocker {
-		docker, err := dockerHTTP.Create(meta["host"].(string), constants.AgentPort)
+		var meta map[string]string
+		if err := json.Unmarshal([]byte(conf), &meta); err != nil {
+			return err
+		}
+		docker, err := dockerHTTP.Create(meta["ip"], constants.AgentPort)
 		if err != nil {
 			return errors.Wrapf(err, "please make sure docker is installed and running on your host")
 		}

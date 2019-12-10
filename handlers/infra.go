@@ -15,11 +15,9 @@ func setupK8S(masterInfo string, agentsInfo string) ([]byte, error) {
 	if len(info) != 2 {
 		return nil, fmt.Errorf("incorrect master info, should be <user>@<ip> format")
 	}
-	master := &infra.Node{
-		User: info[0],
-		IP:   info[1],
-		Name: "master",
-		Type: "master",
+	master, err := infra.CreateNode(info[1], info[0], "k3s_master", "master")
+	if err != nil {
+		return nil, err
 	}
 	nodes := []*infra.Node{master}
 	if agentsInfo != "" {
@@ -29,12 +27,12 @@ func setupK8S(masterInfo string, agentsInfo string) ([]byte, error) {
 			if len(info) != 2 {
 				return nil, fmt.Errorf("incorrect agent info, should be <user>@<ip> format")
 			}
-			nodes = append(nodes, &infra.Node{
-				User: info[0],
-				IP:   info[1],
-				Name: fmt.Sprintf("agent-%d", idx),
-				Type: "agent",
-			})
+			node, err := infra.CreateNode(info[1], info[0], "k3s_agent", fmt.Sprintf("agent-%d", idx))
+			if err != nil {
+				return nil, err
+			}
+
+			nodes = append(nodes, node)
 		}
 	}
 	cloud := infra.NewCloud("k8s", nodes...)
@@ -49,14 +47,12 @@ func setupDocker(hostInfo string, name string) ([]byte, error) {
 	if len(info) != 2 {
 		return nil, fmt.Errorf("incorrect master info, should be <user>@<ip> format")
 	}
-	user := info[1]
-	host := info[0]
+	user := info[0]
+	host := info[1]
 
-	node := &infra.Node{
-		IP:   host,
-		User: user,
-		Name: name,
-		Type: "agent",
+	node, err := infra.CreateNode(host, user, "docker_agent", name)
+	if err != nil {
+		return nil, err
 	}
 	cloud := infra.NewCloud("docker", node)
 	if err := cloud.Provision(); err != nil {

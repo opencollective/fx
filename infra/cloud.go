@@ -10,6 +10,7 @@ type Clouder interface {
 	Provision() error
 	AddNode(n Noder, skipProvision bool) error
 	DeleteNode(name string) error
+	GetConfig() (string, error)
 	Dump() ([]byte, error)
 }
 
@@ -126,6 +127,7 @@ func (c *Cloud) Provision() error {
 
 		for range agents {
 			err := <-errCh
+			panic(err)
 			if err != nil {
 				return err
 			}
