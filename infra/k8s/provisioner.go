@@ -18,10 +18,6 @@ type Provisioner struct {
 	agents []AgentNode
 }
 
-// TODO upgrade to latest when k3s fix the tls scan issue
-// https://github.com/rancher/k3s/issues/556
-const version = "v0.9.1"
-
 // New new a operator
 func New(master MasterNode, agents []AgentNode) *Provisioner {
 	return &Provisioner{
