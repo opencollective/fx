@@ -86,25 +86,26 @@ func (c *Config) AddDockerCloud(name string, config []byte) error {
 }
 
 // AddK8SCloud add k8s cloud
-func (c *Config) AddK8SCloud(name string, kubeconfig []byte) error {
+func (c *Config) AddK8SCloud(name string, data []byte) error {
 	c.mux.Lock()
 	defer c.mux.Unlock()
+
+	var meta map[string]interface{}
+	if err := json.Unmarshal(data, &meta); err != nil {
+		return err
+	}
 
 	dir := path.Dir(c.configFile)
 	kubecfg := path.Join(dir, name+".kubeconfig")
 	if err := utils.EnsureFile(kubecfg); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(kubecfg, kubeconfig, 0666); err != nil {
+	if err := ioutil.WriteFile(kubecfg, []byte(meta["config"].(string)), 0666); err != nil {
 		return err
 	}
+	meta["kubeconfig"] = kubecfg
 
-	cloud := map[string]interface{}{
-		"type":       "k8s",
-		"kubeconfig": kubecfg,
-	}
-
-	return c.addCloud(name, cloud)
+	return c.addCloud(name, meta)
 }
 
 // Use set cloud instance with name as current context

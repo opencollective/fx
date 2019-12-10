@@ -28,7 +28,26 @@ func TestConfig(t *testing.T) {
 		t.Fatal("should get no such cloud error")
 	}
 
-	if err := c.AddK8SCloud(name, []byte("sampe kubeconfg")); err != nil {
+	cloud := map[string]interface{}{
+		"type":   "k8s",
+		"config": "sample kubeconfg",
+		"agents": map[string]map[string]string{
+			"master-node": map[string]string{
+				"ip":   "1.1.1.1",
+				"user": "user-1",
+				"type": "k3s-master",
+				"name": "master-node",
+			},
+			"agent-node-1": map[string]string{
+				"ip":   "1.1.1.1",
+				"user": "user-1",
+				"type": "k3s-agent",
+				"name": "agent-node-1",
+			},
+		},
+	}
+	data, _ := json.Marshal(cloud)
+	if err := c.AddK8SCloud(name, data); err != nil {
 		t.Fatal(err)
 	}
 
