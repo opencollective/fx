@@ -6,8 +6,7 @@ import (
 
 	"github.com/metrue/fx/config"
 	"github.com/metrue/fx/context"
-	dockerInfra "github.com/metrue/fx/infra/docker"
-	"github.com/metrue/fx/infra/k8s"
+	"github.com/metrue/fx/infra"
 	"github.com/metrue/fx/pkg/spinner"
 )
 
@@ -16,38 +15,54 @@ func setupK8S(masterInfo string, agentsInfo string) ([]byte, error) {
 	if len(info) != 2 {
 		return nil, fmt.Errorf("incorrect master info, should be <user>@<ip> format")
 	}
-	master := k8s.MasterNode{
+	master := &infra.Node{
 		User: info[0],
 		IP:   info[1],
+		Name: "master",
+		Type: "master",
 	}
-	agents := []k8s.AgentNode{}
+	nodes := []*infra.Node{master}
 	if agentsInfo != "" {
 		agentsInfoList := strings.Split(agentsInfo, ",")
-		for _, agent := range agentsInfoList {
+		for idx, agent := range agentsInfoList {
 			info := strings.Split(agent, "@")
 			if len(info) != 2 {
 				return nil, fmt.Errorf("incorrect agent info, should be <user>@<ip> format")
 			}
-			agents = append(agents, k8s.AgentNode{
+			nodes = append(nodes, &infra.Node{
 				User: info[0],
 				IP:   info[1],
+				Name: fmt.Sprintf("agent-%d", idx),
+				Type: "agent",
 			})
 		}
 	}
-
-	k8sOperator := k8s.New(master, agents)
-	return k8sOperator.Provision()
+	cloud := infra.NewCloud("k8s", nodes...)
+	if err := cloud.Provision(); err != nil {
+		return nil, err
+	}
+	return cloud.Dump()
 }
 
-func setupDocker(hostInfo string) ([]byte, error) {
+func setupDocker(hostInfo string, name string) ([]byte, error) {
 	info := strings.Split(hostInfo, "@")
 	if len(info) != 2 {
 		return nil, fmt.Errorf("incorrect master info, should be <user>@<ip> format")
 	}
 	user := info[1]
 	host := info[0]
-	dockr := dockerInfra.CreateProvisioner(user, host)
-	return dockr.Provision()
+
+	node := &infra.Node{
+		IP:   host,
+		User: user,
+		Name: name,
+		Type: "agent",
+	}
+	cloud := infra.NewCloud("docker", node)
+	if err := cloud.Provision(); err != nil {
+		return nil, err
+	}
+	return cloud.Dump()
 }
 
 // Setup infra
@@ -86,7 +101,7 @@ func Setup(ctx context.Contexter) (err error) {
 		}
 		return fxConfig.AddK8SCloud(name, kubeconf)
 	case "docker":
-		config, err := setupDocker(cli.String("host"))
+		config, err := setupDocker(cli.String("host"), name)
 		if err != nil {
 			return err
 		}

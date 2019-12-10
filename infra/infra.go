@@ -6,8 +6,6 @@ import (
 	"github.com/metrue/fx/types"
 )
 
-const nodeTypeMaster = "master"
-
 // Provisioner provision interface
 type Provisioner interface {
 	Provision() (config []byte, err error)
