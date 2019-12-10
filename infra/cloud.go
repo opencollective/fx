@@ -84,17 +84,35 @@ func (c *Cloud) Provision() error {
 		}
 	}
 
-	url := fmt.Sprintf("https://%s:6443", master.GetIP())
-	c.meta["url"] = url
-	if err := master.Provision(map[string]string{}); err != nil {
-		return err
+	// when it's k3s cluster
+	if master != nil {
+		url := fmt.Sprintf("https://%s:6443", master.GetIP())
+		c.meta["url"] = url
+		if err := master.Provision(map[string]string{}); err != nil {
+			return err
+		}
+
+		tok, err := master.GetToken()
+		if err != nil {
+			return err
+		}
+		c.meta["token"] = tok
+
+		config, err := master.GetConfig()
+		if err != nil {
+			return err
+		}
+		c.meta["config"] = config
 	}
 
-	tok, err := master.GetToken()
-	if err != nil {
-		return err
+	// when it's a docker agent
+	if len(agents) == 1 && agents[0].GetType() == nodeTypeDocker {
+		config, err := agents[0].GetConfig()
+		if err != nil {
+			return err
+		}
+		c.meta["config"] = config
 	}
-	c.meta["token"] = tok
 
 	if len(agents) > 0 {
 		errCh := make(chan error, len(agents))
@@ -107,8 +125,8 @@ func (c *Cloud) Provision() error {
 		}
 
 		for range agents {
-			e := <-errCh
-			if e != nil {
+			err := <-errCh
+			if err != nil {
 				return err
 			}
 		}
@@ -141,12 +159,13 @@ func (c *Cloud) DeleteNode(name string) error {
 }
 
 // State get cloud state
-func (c Cloud) State() {}
+func (c *Cloud) State() {}
 
 // Dump cloud information
-func (c Cloud) Dump() ([]byte, error) {
+func (c *Cloud) Dump() ([]byte, error) {
 	data := map[string]interface{}{
-		"type": c.meta["type"],
+		"type":   c.meta["type"],
+		"config": c.meta["config"],
 	}
 
 	nodes := map[string]map[string]string{}
@@ -161,6 +180,17 @@ func (c Cloud) Dump() ([]byte, error) {
 	}
 
 	return body, nil
+}
+
+// GetConfig get config
+func (c *Cloud) GetConfig() (string, error) {
+	if c.meta["config"] != "" {
+		return c.meta["config"], nil
+	}
+	if err := c.Provision(); err != nil {
+		return "", err
+	}
+	return c.meta["config"], nil
 }
 
 var (

@@ -18,6 +18,11 @@ import (
 func Provision(ctx context.Contexter) (err error) {
 	fxConfig := ctx.Get("config").(*config.Config)
 	meta := fxConfig.Clouds[fxConfig.CurrentCloud]
+	cloud, err := infra.Load(meta)
+	if err != nil {
+		return err
+	}
+	ctx.Set("cloud", cloud)
 
 	var deployer infra.Deployer
 	if os.Getenv("KUBECONFIG") != "" {
@@ -27,21 +32,6 @@ func Provision(ctx context.Contexter) (err error) {
 		}
 		ctx.Set("cloud_type", config.CloudTypeK8S)
 	} else if meta["type"] == config.CloudTypeDocker {
-		cloud, err := infra.Load(meta)
-		if err != nil {
-			return err
-		}
-		ctx.Set("cloud", cloud)
-		// ok, err := provisioner.HealthCheck()
-		// if err != nil {
-		// 	return err
-		// }
-		// if !ok {
-		// 	if _, err := provisioner.Provision(); err != nil {
-		// 		return err
-		// 	}
-		// }
-
 		docker, err := dockerHTTP.Create(meta["host"].(string), constants.AgentPort)
 		if err != nil {
 			return errors.Wrapf(err, "please make sure docker is installed and running on your host")

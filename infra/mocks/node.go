@@ -46,6 +46,21 @@ func (mr *MockNoderMockRecorder) Provision(meta interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Provision", reflect.TypeOf((*MockNoder)(nil).Provision), meta)
 }
 
+// GetConfig mocks base method
+func (m *MockNoder) GetConfig() (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetConfig")
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetConfig indicates an expected call of GetConfig
+func (mr *MockNoderMockRecorder) GetConfig() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfig", reflect.TypeOf((*MockNoder)(nil).GetConfig))
+}
+
 // GetType mocks base method
 func (m *MockNoder) GetType() string {
 	m.ctrl.T.Helper()

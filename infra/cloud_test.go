@@ -41,6 +41,7 @@ func TestLoad(t *testing.T) {
 		master.EXPECT().GetName().Return(name)
 		master.EXPECT().GetType().Return(typ)
 		master.EXPECT().GetIP().Return(ip)
+		master.EXPECT().GetConfig().Return("sample-config", nil)
 		meta := map[string]interface{}{
 			"nodes": map[string]map[string]string{
 				"master": map[string]string{
@@ -84,12 +85,13 @@ func TestLoad(t *testing.T) {
 		master.EXPECT().GetName().Return(name)
 		master.EXPECT().GetType().Return(typ)
 		master.EXPECT().GetIP().Return(ip)
+		master.EXPECT().GetConfig().Return("sample-config", nil)
 
 		nodeType := nodeTypeAgent
 		nodeName := "agent_name"
 		nodeIP := "12.12.12.12"
 		node.EXPECT().GetName().Return(nodeName)
-		node.EXPECT().GetType().Return(nodeType)
+		node.EXPECT().GetType().Return(nodeType).Times(2)
 
 		meta := map[string]interface{}{
 			"nodes": map[string]map[string]string{
@@ -118,8 +120,9 @@ func TestLoad(t *testing.T) {
 		master.EXPECT().Provision(map[string]string{}).Return(nil)
 		master.EXPECT().GetToken().Return("tok-1", nil)
 		node.EXPECT().Provision(map[string]string{
-			"token": "tok-1",
-			"url":   "https://127.0.0.1:6443",
+			"token":  "tok-1",
+			"url":    "https://127.0.0.1:6443",
+			"config": "sample-config",
 		}).Return(nil)
 		if err := cloud.Provision(); err != nil {
 			t.Fatal(err)

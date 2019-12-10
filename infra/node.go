@@ -3,6 +3,7 @@ package infra
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,6 +19,7 @@ const nodeTypeDocker = "docker_agent"
 // Noder node interface
 type Noder interface {
 	Provision(meta map[string]string) error
+	GetConfig() (string, error)
 	GetType() string
 	GetName() string
 	GetToken() (string, error)
@@ -147,6 +149,26 @@ func (n *Node) GetName() string {
 // GetIP get node type
 func (n *Node) GetIP() string {
 	return n.IP
+}
+
+// GetConfig get config
+func (n *Node) GetConfig() (string, error) {
+	if n.Type == nodeTypeMaster {
+		var outPipe bytes.Buffer
+		if err := n.sshClient.RunCommand(scripts["get_k3s_kubeconfig"].(string), ssh.CommandOptions{
+			Stdout: bufio.NewWriter(&outPipe),
+		}); err != nil {
+			return "", err
+		}
+		return outPipe.String(), nil
+	} else if n.Type == nodeTypeDocker {
+		data, err := json.Marshal(n.Dump())
+		if err != nil {
+			return "", err
+		}
+		return string(data), nil
+	}
+	return "", fmt.Errorf("no config for node type of %s", n.Type)
 }
 
 // NOTE only using for unit testing
