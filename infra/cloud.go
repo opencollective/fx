@@ -127,7 +127,6 @@ func (c *Cloud) Provision() error {
 
 		for range agents {
 			err := <-errCh
-			panic(err)
 			if err != nil {
 				return err
 			}
